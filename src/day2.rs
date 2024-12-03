@@ -1,6 +1,6 @@
 use std::{cmp::Ordering, io};
 
-fn classify_report(report: &Vec<&str>) -> bool {
+fn classify_report(report: &[&str]) -> bool {
     let mut direction: Option<Ordering> = None;
     for pair in report.windows(2) {
         let left = pair[0].parse::<i32>().unwrap();
@@ -26,19 +26,16 @@ fn classify_report(report: &Vec<&str>) -> bool {
     true
 }
 
-fn classify_report_pt1(report: &str) -> bool {
-    classify_report(&report.split_ascii_whitespace().collect())
-}
-
-fn classify_report_pt2(report: &str) -> bool {
-    let line = report.split_ascii_whitespace().collect();
-
-    classify_report(&line)
-        || (0..line.len()).any(|i| {
-            let mut line = line.clone();
+fn classify_report_pt2(report: &[&str]) -> (bool, bool) {
+    let part1_succeeds = classify_report(report);
+    let part2_succeeds = part1_succeeds
+        || (0..report.len()).any(|i| {
+            let mut line = report.to_owned();
             line.remove(i);
             classify_report(&line)
-        })
+        });
+
+    (part1_succeeds, part2_succeeds)
 }
 
 fn main() {
@@ -47,12 +44,17 @@ fn main() {
     let mut count_1 = 0;
     let mut count_2 = 0;
     while matches!(io::stdin().read_line(&mut report), Ok(n) if n > 0) {
-        if classify_report_pt1(&report) {
+        let report_vec: Vec<_> = report.split_ascii_whitespace().collect();
+        let (pt1, pt2) = classify_report_pt2(&report_vec);
+
+        if pt1 {
             count_1 += 1;
         }
-        if classify_report_pt2(&report) {
+
+        if pt2 {
             count_2 += 1;
         }
+
         report.clear();
     }
 
