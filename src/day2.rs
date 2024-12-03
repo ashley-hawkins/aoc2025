@@ -1,4 +1,6 @@
-use std::{cmp::Ordering, io};
+use std::cmp::Ordering;
+
+use util::stdin_lines;
 
 fn classify_report(report: &[&str]) -> bool {
     let mut direction: Option<Ordering> = None;
@@ -39,11 +41,9 @@ fn classify_report_pt2(report: &[&str]) -> (bool, bool) {
 }
 
 fn main() {
-    let mut report: String = String::new();
-
     let mut count_1 = 0;
     let mut count_2 = 0;
-    while matches!(io::stdin().read_line(&mut report), Ok(n) if n > 0) {
+    for report in stdin_lines() {
         let report_vec: Vec<_> = report.split_ascii_whitespace().collect();
         let (pt1, pt2) = classify_report_pt2(&report_vec);
 
@@ -54,8 +54,6 @@ fn main() {
         if pt2 {
             count_2 += 1;
         }
-
-        report.clear();
     }
 
     println!("Part 1: {} / Part 2: {}", count_1, count_2);

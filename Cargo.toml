@@ -12,3 +12,4 @@ name = "day2"
 path = "src/day2.rs"
 
 [dependencies]
+util = { version = "0.1.0", path = "util" }
