@@ -41,20 +41,20 @@ fn classify_report_pt2(report: &[&str]) -> (bool, bool) {
 }
 
 fn main() {
-    let mut count_1 = 0;
-    let mut count_2 = 0;
+    let mut part1 = 0;
+    let mut part2 = 0;
     for report in stdin_lines() {
         let report_vec: Vec<_> = report.split_ascii_whitespace().collect();
         let (pt1, pt2) = classify_report_pt2(&report_vec);
 
         if pt1 {
-            count_1 += 1;
+            part1 += 1;
         }
 
         if pt2 {
-            count_2 += 1;
+            part2 += 1;
         }
     }
 
-    println!("Part 1: {} / Part 2: {}", count_1, count_2);
+    println!("Part 1: {part1} / Part 2: {part2}");
 }

@@ -31,5 +31,5 @@ fn main() {
             (acc_diff + diff, acc_sum + sum)
         });
 
-    println!("Part 1: {}, Part 2: {}", part1, part2);
+    println!("Part 1: {part1}, Part 2: {part2}");
 }
