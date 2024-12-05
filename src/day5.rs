@@ -18,8 +18,7 @@ fn main() {
             .collect::<HashSet<_>>()
     };
 
-    let results: i32 = lines
-        .by_ref()
+    let (part1, part2) = lines
         .map(|line| {
             let mut parts = line
                 .split(",")
@@ -31,16 +30,26 @@ fn main() {
                 for j in i + 1..parts.len() {
                     if rules.contains(&(parts[j], parts[i])) {
                         is_correct = false;
-                        parts.swap(i, j);
+                        parts.sort_by(|a, b| {
+                            if rules.contains(&(*b, *a)) {
+                                std::cmp::Ordering::Greater
+                            } else if rules.contains(&(*a, *b)) {
+                                std::cmp::Ordering::Less
+                            } else {
+                                std::cmp::Ordering::Equal
+                            }
+                        });
                     }
                 }
             }
+            let mid = parts[parts.len() / 2];
             if is_correct {
-                return 0;
+                (mid, 0)
+            } else {
+                (0, mid)
             }
-            parts[parts.len() / 2]
         })
-        .sum();
+        .fold((0, 0), |(acc1, acc2), (a, b)| (acc1 + a, acc2 + b));
 
-    println!("Result: {}", results);
+    println!("Part 1: {part1} / Part 2: {part2}");
 }
