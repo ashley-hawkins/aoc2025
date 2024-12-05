@@ -64,8 +64,8 @@ fn cross_mas_search(grid: &[Vec<u8>], coord: (usize, usize)) -> bool {
     upper_left_to_lower_right_arm && upper_right_to_lower_left_arm
 }
 
-fn main() {
-    let lines: Vec<_> = stdin_lines().map(String::into_bytes).collect();
+fn solve(lines: impl Iterator<Item = String>) -> (usize, usize) {
+    let lines: Vec<_> = lines.map(String::into_bytes).collect();
 
     let mut part1 = 0;
     let mut part2 = 0;
@@ -79,6 +79,27 @@ fn main() {
         }
     }
 
+    (part1, part2)
+}
+
+fn main() {
+    let (part1, part2) = solve(stdin_lines());
+
     println!("Part 1: {part1}");
     println!("Part 2: {part2}");
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_solve() {
+        let input = include_str!("../test_data/day4.txt");
+
+        let (part1, part2) = solve(input.lines().map(str::to_owned));
+
+        assert_eq!(part1, 18);
+        assert_eq!(part2, 9);
+    }
 }

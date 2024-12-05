@@ -40,10 +40,10 @@ fn classify_report_pt2(report: &[&str]) -> (bool, bool) {
     (part1_succeeds, part2_succeeds)
 }
 
-fn main() {
+fn solve(lines: impl Iterator<Item = String>) -> (i32, i32) {
     let mut part1 = 0;
     let mut part2 = 0;
-    for report in stdin_lines() {
+    for report in lines {
         let report_vec: Vec<_> = report.split_ascii_whitespace().collect();
         let (pt1, pt2) = classify_report_pt2(&report_vec);
 
@@ -56,6 +56,27 @@ fn main() {
         }
     }
 
+    (part1, part2)
+}
+
+fn main() {
+    let (part1, part2) = solve(stdin_lines());
+
     println!("Part 1: {part1}");
     println!("Part 2: {part2}");
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_solve() {
+        let input = include_str!("../test_data/day2.txt");
+
+        let (part1, part2) = solve(input.lines().map(str::to_owned));
+
+        assert_eq!(part1, 2);
+        assert_eq!(part2, 4);
+    }
 }

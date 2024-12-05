@@ -2,9 +2,7 @@ use std::collections::HashSet;
 
 use util::stdin_lines;
 
-fn main() {
-    let mut lines = stdin_lines();
-
+fn solve(mut lines: impl Iterator<Item = String>) -> (i32, i32) {
     // Rules
     let rules = {
         let rules_iter = lines.by_ref().take_while(|line| !line.is_empty());
@@ -30,8 +28,8 @@ fn main() {
         true
     };
 
-    let mut part1: i32 = 0;
-    let mut part2: i32 = 0;
+    let mut part1 = 0;
+    let mut part2 = 0;
     for update in lines {
         let mut pages = update
             .split(",")
@@ -60,6 +58,27 @@ fn main() {
         }
     }
 
+    (part1, part2)
+}
+
+fn main() {
+    let (part1, part2) = solve(stdin_lines());
+
     println!("Part 1: {part1}");
     println!("Part 2: {part2}");
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_solve() {
+        let input = include_str!("../test_data/day5.txt");
+
+        let (part1, part2) = solve(input.lines().map(str::to_owned));
+
+        assert_eq!(part1, 143);
+        assert_eq!(part2, 123);
+    }
 }
