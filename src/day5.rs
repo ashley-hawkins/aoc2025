@@ -26,12 +26,17 @@ fn main() {
                 .map(|element| element.parse().unwrap())
                 .collect::<Vec<i32>>();
 
+            let mut is_correct = true;
             for i in 0..parts.len() {
                 for j in i + 1..parts.len() {
                     if rules.contains(&(parts[j], parts[i])) {
-                        return 0;
+                        is_correct = false;
+                        parts.swap(i, j);
                     }
                 }
+            }
+            if is_correct {
+                return 0;
             }
             parts[parts.len() / 2]
         })
