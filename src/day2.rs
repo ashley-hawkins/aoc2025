@@ -2,11 +2,11 @@ use std::cmp::Ordering;
 
 use util::stdin_lines;
 
-fn classify_report(report: &[&str]) -> bool {
+fn classify_report(levels: &[i32]) -> bool {
     let mut direction: Option<Ordering> = None;
-    for pair in report.windows(2) {
-        let left = pair[0].parse::<i32>().unwrap();
-        let right = pair[1].parse::<i32>().unwrap();
+    for pair in levels.windows(2) {
+        let left = pair[0];
+        let right = pair[1];
         let this_direction = left.cmp(&right);
 
         if direction.is_none() {
@@ -23,11 +23,11 @@ fn classify_report(report: &[&str]) -> bool {
     true
 }
 
-fn classify_report_pt2(report: &[&str]) -> (bool, bool) {
-    let part1_succeeds = classify_report(report);
+fn classify_report_pt2(levels: &[i32]) -> (bool, bool) {
+    let part1_succeeds = classify_report(levels);
     let part2_succeeds = part1_succeeds
-        || (0..report.len()).any(|i| {
-            let mut line = report.to_owned();
+        || (0..levels.len()).any(|i| {
+            let mut line = levels.to_owned();
             line.remove(i);
             classify_report(&line)
         });
@@ -38,9 +38,14 @@ fn classify_report_pt2(report: &[&str]) -> (bool, bool) {
 fn solve(lines: impl Iterator<Item = String>) -> (i32, i32) {
     let mut part1 = 0;
     let mut part2 = 0;
+
     for report in lines {
-        let report_vec: Vec<_> = report.split_ascii_whitespace().collect();
-        let (pt1, pt2) = classify_report_pt2(&report_vec);
+        let levels: Vec<_> = report
+            .split_ascii_whitespace()
+            .map(|level| level.parse().unwrap())
+            .collect();
+
+        let (pt1, pt2) = classify_report_pt2(&levels);
 
         if pt1 {
             part1 += 1;
