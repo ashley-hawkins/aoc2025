@@ -41,5 +41,6 @@ fn main() {
             (acc1 + val1, acc2 + val2)
         });
 
-    println!("Part 1: {part1} / Part 2: {part2}");
+    println!("Part 1: {part1}");
+    println!("Part 2: {part2}");
 }
