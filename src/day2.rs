@@ -10,13 +10,8 @@ fn classify_report(report: &[&str]) -> bool {
         let this_direction = left.cmp(&right);
 
         if direction.is_none() {
-            if direction == Some(Ordering::Equal) {
-                return false;
-            }
             direction = Some(this_direction);
-        }
-
-        if direction != Some(this_direction) {
+        } else if direction != Some(this_direction) {
             return false;
         }
 
