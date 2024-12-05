@@ -19,39 +19,46 @@ fn main() {
             .collect::<HashSet<_>>()
     };
 
-    // Updates
-    let (part1, part2) = lines
-        .map(|update| {
-            let mut pages = update
-                .split(",")
-                .map(|element| element.parse().unwrap())
-                .collect::<Vec<i32>>();
-
-            let mut is_correct = true;
-            for i in 0..pages.len() {
-                for j in i + 1..pages.len() {
-                    if rules.contains(&(pages[j], pages[i])) {
-                        is_correct = false;
-                        pages.sort_by(|a, b| {
-                            if rules.contains(&(*b, *a)) {
-                                std::cmp::Ordering::Greater
-                            } else if rules.contains(&(*a, *b)) {
-                                std::cmp::Ordering::Less
-                            } else {
-                                std::cmp::Ordering::Equal
-                            }
-                        });
-                    }
+    let is_update_correct = |pages: &[i32]| -> bool {
+        for i in 0..pages.len() {
+            for j in i + 1..pages.len() {
+                if rules.contains(&(pages[j], pages[i])) {
+                    return false;
                 }
             }
-            let mid = pages[pages.len() / 2];
-            if is_correct {
-                (mid, 0)
-            } else {
-                (0, mid)
-            }
-        })
-        .fold((0, 0), |(acc1, acc2), (a, b)| (acc1 + a, acc2 + b));
+        }
+        true
+    };
+
+    let mut part1: i32 = 0;
+    let mut part2: i32 = 0;
+    for update in lines {
+        let mut pages = update
+            .split(",")
+            .map(|element| element.parse().unwrap())
+            .collect::<Vec<i32>>();
+
+        let is_correct = is_update_correct(&pages);
+
+        if !is_correct {
+            pages.sort_by(|a, b| {
+                if rules.contains(&(*b, *a)) {
+                    std::cmp::Ordering::Greater
+                } else if rules.contains(&(*a, *b)) {
+                    std::cmp::Ordering::Less
+                } else {
+                    std::cmp::Ordering::Equal
+                }
+            });
+        }
+
+        let mid = pages[pages.len() / 2];
+        if is_correct {
+            part1 += mid;
+        } else {
+            part2 += mid;
+        }
+    }
 
     println!("Part 1: {part1}");
     println!("Part 2: {part2}");

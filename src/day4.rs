@@ -67,27 +67,17 @@ fn cross_mas_search(grid: &[Vec<u8>], coord: (usize, usize)) -> bool {
 fn main() {
     let lines: Vec<_> = stdin_lines().map(String::into_bytes).collect();
 
-    let part1: usize = (0..lines.len())
-        .map(|i| -> usize {
-            let len = lines[i].len();
-            (0..len).map(|j| word_search(&lines, (i, j), b"XMAS")).sum()
-        })
-        .sum();
+    let mut part1 = 0;
+    let mut part2 = 0;
 
-    let part2: usize = (0..lines.len())
-        .map(|i| -> usize {
-            let len = lines[i].len();
-            (0..len)
-                .map(|j| {
-                    if cross_mas_search(&lines, (i, j)) {
-                        1
-                    } else {
-                        0
-                    }
-                })
-                .sum()
-        })
-        .sum();
+    for i in 0..lines.len() {
+        for j in 0..lines[i].len() {
+            part1 += word_search(&lines, (i, j), b"XMAS");
+            if cross_mas_search(&lines, (i, j)) {
+                part2 += 1;
+            }
+        }
+    }
 
     println!("Part 1: {part1}");
     println!("Part 2: {part2}");
