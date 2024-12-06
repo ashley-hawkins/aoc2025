@@ -11,9 +11,7 @@ fn solve(lines: impl Iterator<Item = String>) -> (i32, i32) {
     let mut active = true;
     for line in lines {
         for captures in instruction_pattern.captures_iter(&line) {
-            let main_group = captures.get(0).unwrap();
-
-            match main_group.as_str() {
+            match &captures[0] {
                 "do()" => {
                     active = true;
                 }
@@ -21,8 +19,8 @@ fn solve(lines: impl Iterator<Item = String>) -> (i32, i32) {
                     active = false;
                 }
                 _ => {
-                    let left: i32 = captures.get(1).unwrap().as_str().parse().unwrap();
-                    let right: i32 = captures.get(2).unwrap().as_str().parse().unwrap();
+                    let left: i32 = captures[1].parse().unwrap();
+                    let right: i32 = captures[2].parse().unwrap();
                     let res = left * right;
                     part1 += res;
                     if active {
