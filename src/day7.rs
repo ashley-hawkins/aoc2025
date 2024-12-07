@@ -1,3 +1,12 @@
+use itertools::Itertools;
+
+#[derive(Clone, Copy)]
+enum Operator {
+    Add,
+    Mul,
+    Concat,
+}
+
 fn concat(a: u64, b: u64) -> u64 {
     a * 10u64.pow(b.checked_ilog10().unwrap_or(0) + 1) + b
 }
@@ -12,7 +21,8 @@ fn solve(lines: impl Iterator<Item = String>) -> (u64, u64) {
             .next()
             .unwrap()
             .parse()
-            .expect(format!("Failed to parse {}", line).as_str());
+            .unwrap_or_else(|_| panic!("Failed to parse {}", line));
+
         let operands: Vec<u64> = parts
             .next()
             .unwrap()
@@ -20,13 +30,18 @@ fn solve(lines: impl Iterator<Item = String>) -> (u64, u64) {
             .map(|operand| operand.parse().unwrap())
             .collect();
 
-        for i in 0..(1 << (operands.len() - 1)) {
-            let mut sum = operands[0];
-            for j in 0..operands.len() - 1 {
-                if i & (1 << j) != 0 {
-                    sum += operands[j + 1];
-                } else {
-                    sum *= operands[j + 1];
+        let starting_point = operands[0];
+
+        for ops in std::iter::repeat([Operator::Add, Operator::Mul])
+            .take(operands.len() - 1)
+            .multi_cartesian_product()
+        {
+            let mut sum = starting_point;
+            for (op, operand) in ops.iter().zip(operands.iter().skip(1)) {
+                match op {
+                    Operator::Mul => sum *= operand,
+                    Operator::Add => sum += operand,
+                    _ => unreachable!(),
                 }
             }
 
@@ -37,17 +52,18 @@ fn solve(lines: impl Iterator<Item = String>) -> (u64, u64) {
             }
         }
 
-        for i in 0..(3i64.pow((operands.len() - 1) as u32)) {
-            let mut sum = operands[0];
-            for j in 0..operands.len() - 1 {
-                let op = (i / 3i64.pow(j as u32)) % 3;
+        for ops in std::iter::repeat([Operator::Add, Operator::Mul, Operator::Concat])
+            .take(operands.len() - 1)
+            .multi_cartesian_product()
+        {
+            let mut sum = starting_point;
+            for (op, operand) in ops.iter().zip(operands.iter().skip(1)) {
                 match op {
-                    0 => sum *= operands[j + 1],
-                    1 => sum += operands[j + 1],
-                    2 => {
-                        sum = concat(sum, operands[j + 1]);
+                    Operator::Mul => sum *= operand,
+                    Operator::Add => sum += operand,
+                    Operator::Concat => {
+                        sum = concat(sum, *operand);
                     }
-                    _ => unreachable!(),
                 }
             }
 
