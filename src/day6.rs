@@ -50,7 +50,7 @@ fn check(lines: &[Vec<u8>], mut guard: (usize, usize)) -> Result {
 fn solve(lines: impl Iterator<Item = String>) -> (usize, usize) {
     let mut lines: Vec<_> = lines.map(String::into_bytes).collect();
 
-    let mut guard = (|| {
+    let guard = (|| {
         for i in 0..lines.len() {
             for j in 0..lines[i].len() {
                 if lines[i][j] == b'^' {
