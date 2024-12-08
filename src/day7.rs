@@ -12,7 +12,7 @@ fn concat(a: u64, b: u64) -> u64 {
     a * 10u64.pow(b.checked_ilog10().unwrap_or(0) + 1) + b
 }
 
-fn solve(mut lines: impl Iterator<Item = String>) -> (u64, u64) {
+fn solve(lines: impl Iterator<Item = String>) -> (u64, u64) {
     let (part1, part2) = lines
         .collect_vec()
         .par_iter()

@@ -1,6 +1,6 @@
 use std::collections::HashSet;
 
-use ndarray::{Array2, ArrayView2};
+use ndarray::Array2;
 
 enum Result {
     Exited,
