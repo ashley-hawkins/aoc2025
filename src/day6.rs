@@ -17,16 +17,6 @@ enum Direction {
 }
 
 impl Direction {
-    fn from_byte(byte: u8) -> Self {
-        match byte {
-            b'U' => Self::Up,
-            b'D' => Self::Down,
-            b'L' => Self::Left,
-            b'R' => Self::Right,
-            _ => panic!("Invalid direction"),
-        }
-    }
-
     fn to_byte(self) -> u8 {
         self as u8
     }
