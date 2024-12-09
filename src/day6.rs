@@ -58,7 +58,6 @@ fn check(
     // Initial direction is up
     let mut direction = Direction::Up;
 
-    
     positions.insert(guard);
     loop {
         let direction_vector = direction.to_vector();

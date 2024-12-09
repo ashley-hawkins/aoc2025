@@ -49,57 +49,6 @@ fn compact_part_1(expanded: Vec<BlockBlock>) -> Vec<Block> {
     expanded
 }
 
-// fn compact_part_2(mut expanded: Vec<BlockBlock>) -> Vec<Block> {
-//     let mut offsets = Vec::new();
-//     for file_id in (1..=(expanded.len() / 2)).rev() {
-//         let file_idx = file_id * 2 + offsets.iter().filter(|&&idx| idx < file_id * 2).count();
-//         match expanded[file_idx] {
-//             BlockBlock::Occupied {
-//                 file_id: id,
-//                 length,
-//             } if id == file_id as u32 => {
-//                 if let Some((empty_idx, empty_block)) =
-//                     expanded
-//                         .iter_mut()
-//                         .enumerate()
-//                         .find(|(_, block)| match block {
-//                             BlockBlock::Empty(empty_length) => *empty_length >= length,
-//                             _ => false,
-//                         })
-//                 {
-//                     match empty_block {
-//                         BlockBlock::Empty(empty_length) => {
-//                             *empty_length -= length;
-//                         }
-//                         _ => unreachable!(),
-//                     }
-//                     let file = expanded.remove(file_idx);
-//                     expanded.insert(empty_idx, file);
-//                     // offsets.iter_mut().for_each(|offset| {
-//                     //     if *offset > empty_idx {
-//                     //         *offset += 1;
-//                     //     }
-//                     // });
-//                     offsets.push(empty_idx);
-//                 }
-//             }
-//             _ => {
-//                 panic!("This should never happen. File ID: {file_id}, File Index: {file_idx}, Files: {expanded:?}, Offsets: {offsets:?}");
-//             }
-//         }
-//     }
-
-//     expanded
-//         .into_iter()
-//         .flat_map(|block| match block {
-//             BlockBlock::Empty(length) => std::iter::repeat(Block::Empty).take(length),
-//             BlockBlock::Occupied { file_id, length } => {
-//                 std::iter::repeat(Block::Occupied { file_id }).take(length)
-//             }
-//         })
-//         .collect::<Vec<_>>()
-// }
-
 fn compact_part_2(mut expanded: Vec<BlockBlock>) -> Vec<Block> {
     let max_file_id = expanded.len() / 2;
     expanded.retain(|block| !matches!(block, BlockBlock::Empty(0)));
@@ -212,11 +161,6 @@ fn solve(mut lines: impl Iterator<Item = String>) -> (u64, usize) {
         })
         .sum();
 
-    // println!("{}", blockblock_to_block(expanded.clone()).iter().map(|block| match block {
-    //     Block::Empty => '.',
-    //     Block::Occupied { file_id } => std::char::from_digit(*file_id % 10, 10).unwrap(),
-    // }).collect::<String>());
-
     let expanded_part_2 = compact_part_2(expanded);
     let checksum_part_2: usize = expanded_part_2
         .iter()
@@ -226,11 +170,6 @@ fn solve(mut lines: impl Iterator<Item = String>) -> (u64, usize) {
             Block::Occupied { file_id } => *file_id as usize * i,
         })
         .sum();
-    // println!("{}", expanded_part_2.iter().map(|block| match block {
-    //     Block::Empty => '.',
-    //     Block::Occupied { file_id } => std::char::from_digit(*file_id % 10, 10).unwrap(),
-    // }).collect::<String>());
-
     (checksum, checksum_part_2)
 }
 
