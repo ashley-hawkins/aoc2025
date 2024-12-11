@@ -30,3 +30,33 @@ pub fn lines_to_grid(lines: impl Iterator<Item = String>) -> ndarray::Array2<u8>
 
     grid
 }
+
+pub struct ScopedStopwatch<F>
+where
+    F: FnOnce(std::time::Duration),
+{
+    start: std::time::Instant,
+    callback: Option<F>,
+}
+
+impl<F> ScopedStopwatch<F>
+where
+    F: FnOnce(std::time::Duration),
+{
+    pub fn new(callback: F) -> Self {
+        Self {
+            start: std::time::Instant::now(),
+            callback: Some(callback),
+        }
+    }
+}
+
+impl<F> Drop for ScopedStopwatch<F>
+where
+    F: FnOnce(std::time::Duration),
+{
+    fn drop(&mut self) {
+        let elapsed = self.start.elapsed();
+        self.callback.take().unwrap()(elapsed);
+    }
+}

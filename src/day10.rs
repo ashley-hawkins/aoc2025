@@ -62,7 +62,12 @@ fn solve(lines: impl Iterator<Item = String>) -> (i64, i64) {
 }
 
 fn main() {
-    let (part1, part2) = solve(stdin_lines());
+    let (part1, part2) = {
+        let _stopwatch = util::ScopedStopwatch::new(|duration| {
+            eprintln!("Time: {:?}", duration);
+        });
+        solve(stdin_lines())
+    };
 
     println!("Part 1: {part1}");
     println!("Part 2: {part2}");
