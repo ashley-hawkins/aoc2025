@@ -47,7 +47,7 @@ mod tests {
 
     #[test]
     fn test_solve() {
-        let input = include_str!("../test_data/day3.txt")
+        let input = include_str!("../test_data/day03.txt")
             .lines()
             .map(str::to_owned);
 
