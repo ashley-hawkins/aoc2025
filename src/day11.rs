@@ -1,6 +1,5 @@
 use std::collections::HashMap;
 
-use rayon::iter::{IntoParallelIterator, ParallelIterator};
 use util::stdin_lines;
 
 fn transform(input: i64) -> (Option<i64>, i64) {
@@ -29,20 +28,10 @@ fn transform_map(input: HashMap<i64, u64>) -> HashMap<i64, u64> {
         }
     };
     input
-        .into_par_iter()
+        .into_iter()
         .flat_map(mapper)
-        .flat_map(mapper)
-        .flat_map(mapper)
-        .flat_map(mapper)
-        .flat_map(mapper)
-        .fold(HashMap::new, |mut acc, (n, count)| {
+        .fold(HashMap::new(), |mut acc, (n, count)| {
             *acc.entry(n).or_insert(0) += count;
-            acc
-        })
-        .reduce(HashMap::new, |mut acc, rhs| {
-            for (n, count) in rhs {
-                *acc.entry(n).or_insert(0) += count;
-            }
             acc
         })
 }
@@ -60,19 +49,17 @@ fn solve(mut lines: impl Iterator<Item = String>) -> (u64, u64) {
 
     let mut res = starting_numbers;
 
-    for _ in 0..5 {
+    for _ in 0..25 {
         res = transform_map(res);
     }
 
     let part1 = res.iter().fold(0, |acc, (_, &v)| acc + v);
 
-    for _ in 0..10 {
+    for _ in 0..50 {
         res = transform_map(res);
     }
 
     let part2 = res.iter().fold(0, |acc, (_, &v)| acc + v);
-
-    println!("{:?}", res.len());
 
     (part1, part2)
 }
