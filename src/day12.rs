@@ -48,7 +48,7 @@ struct SearchState {
 }
 
 impl SearchState {
-    fn new(x: usize, y: usize) -> Self {
+    fn new() -> Self {
         Self {
             region_type: None,
             region_points: HashSet::new(),
@@ -96,28 +96,20 @@ fn search(
     let left = (x.wrapping_sub(1), y);
     let right = (x.saturating_add(1), y);
 
-    let mut check =
-        |idx, idx_adj_1, idx_adj_2, meta_mapping: &dyn Fn(&mut Metadata) -> &mut bool| {
-            match search(grid, search_state, idx) {
-                Subregion(subregion) => {
-                    result += subregion;
-                }
-                NotFound => {
-                    *meta_mapping(&mut grid[(x, y)].1) = true;
-                    // let mut check_adjacent = |idx| {
-                    //     grid.get_mut(idx)
-                    //         .map(|(value, metadata)| {
-                    //             Some(*value) == region_type && *meta_mapping(metadata)
-                    //         })
-                    //         .unwrap_or(false)
-                    // };
-
-                    // if !check_adjacent(idx_adj_1) && !check_adjacent(idx_adj_2) {
-                    result.perimiter += 1;
-                    // }
-                }
+    let mut check = |idx,
+                     idx_adj_1,
+                     idx_adj_2,
+                     meta_mapping: &dyn Fn(&mut Metadata) -> &mut bool| {
+        match search(grid, search_state, idx) {
+            Subregion(subregion) => {
+                result += subregion;
             }
-        };
+            NotFound => {
+                *meta_mapping(&mut grid[(x, y)].1) = true;
+                result.perimiter += 1;
+            }
+        }
+    };
 
     check(up, left, right, &|m| &mut m.top_edge);
     check(down, left, right, &|m| &mut m.bottom_edge);
@@ -150,7 +142,7 @@ fn solve(lines: impl Iterator<Item = String>) -> (usize, usize) {
     let mut regions = Vec::new();
     for x in 0..grid.shape()[0] {
         for y in 0..grid.shape()[1] {
-            let mut search_state = SearchState::new(x, y);
+            let mut search_state = SearchState::new();
             let region = search(&mut grid, &mut search_state, (x, y));
             if let SearchResult::Subregion(region) = region {
                 if region.area > 0 {
