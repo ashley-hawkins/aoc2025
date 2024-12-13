@@ -80,17 +80,7 @@ fn check(
 }
 
 fn solve(lines: impl Iterator<Item = String>) -> (usize, usize) {
-    let lines = lines.collect::<Vec<_>>();
-
-    let width = lines[0].len();
-    let height = lines.len();
-
-    let map = lines
-        .into_iter()
-        .flat_map(String::into_bytes)
-        .collect::<Vec<_>>();
-
-    let mut map = ndarray::Array2::from_shape_vec((height, width), map).unwrap();
+    let mut map = util::lines_to_grid(lines);
 
     let guard = (|| {
         for i in 0..map.dim().0 {
