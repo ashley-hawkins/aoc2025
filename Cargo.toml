@@ -51,7 +51,12 @@ path = "src/day11.rs"
 name = "day12"
 path = "src/day12.rs"
 
+[[bin]]
+name = "day13"
+path = "src/day13.rs"
+
 [dependencies]
+good_lp = { version = "1.10.0", features = ["highs"] }
 itertools = "0.13.0"
 multimap = "0.10.0"
 ndarray = "0.16.1"
