@@ -1,54 +1,48 @@
-use good_lp::{constraint, variables, ProblemVariables, Solution, SolverModel};
 use itertools::Itertools;
 use util::stdin_lines;
+use z3::ast::{Ast, Int};
 
 fn solve(lines: impl Iterator<Item = String>) -> (i64, i64) {
-    let result: i64 = lines
-        .chunks(4)
-        .into_iter()
-        .map(|entry| {
-            // let x = 94;
-            // let y = 34;
-            // let z = 22;
-            // let w = 67;
-            // let v = 8400;
-            // let u = 5400;
+    let cfg = z3::Config::new();
+    let ctx = z3::Context::new(&cfg);
 
-            let lines = entry.collect_vec();
-            let parts = lines[0].split("+").flat_map(|x| x.split(",")).collect_vec();
-            let x: i32 = parts[1].trim().parse().unwrap();
-            let y: i32 = parts[3].trim().parse().unwrap();
-            let parts = lines[1].split("+").flat_map(|x| x.split(",")).collect_vec();
-            let z: i32 = parts[1].trim().parse().unwrap();
-            let w: i32 = parts[3].trim().parse().unwrap();
-            let parts = lines[2].split("=").flat_map(|x| x.split(",")).collect_vec();
-            let v: i32 = parts[1].trim().parse().unwrap();
-            let u: i32 = parts[3].trim().parse().unwrap();
+    let a = Int::new_const(&ctx, "a".to_string());
+    let b = Int::new_const(&ctx, "b".to_string());
 
-            drop(lines);
+    let mut part1: i64 = 0;
+    let mut part2: i64 = 0;
+    for entry in lines.chunks(4).into_iter() {
+        let lines = entry.collect_vec();
+        let parts = lines[0].split("+").flat_map(|x| x.split(",")).collect_vec();
+        let a_dx: i64 = parts[1].trim().parse().unwrap();
+        let a_dy: i64 = parts[3].trim().parse().unwrap();
+        let parts = lines[1].split("+").flat_map(|x| x.split(",")).collect_vec();
+        let b_dx: i64 = parts[1].trim().parse().unwrap();
+        let b_dy: i64 = parts[3].trim().parse().unwrap();
+        let parts = lines[2].split("=").flat_map(|x| x.split(",")).collect_vec();
+        let prize_x_1: i64 = parts[1].trim().parse().unwrap();
+        let prize_y_1: i64 = parts[3].trim().parse().unwrap();
+        let prize_x_2 = prize_x_1 + 10000000000000;
+        let prize_y_2 = prize_y_1 + 10000000000000;
 
-            variables! {
-                vars:
-                    0 <= a (integer) <= 100;
-                    0 <= b (integer) <= 100;
-            }
+        let minimise_with_prize_position = |prize_x, prize_y| {
+            let s = z3::Optimize::new(&ctx);
+            let total_cost = 3i64 * &a + &b;
+            s.assert(&(a_dx * &a + b_dx * &b)._eq(&Int::from_i64(&ctx, prize_x)));
+            s.assert(&(a_dy * &a + b_dy * &b)._eq(&Int::from_i64(&ctx, prize_y)));
+            s.minimize(&total_cost);
 
-            let mut problem = vars.minimise(3 * a + b).using(good_lp::default_solver);
-            problem.set_parameter("log", "0");
-            problem
-                .with(constraint!((x * a + z * b) == v))
-                .with(constraint!((y * a + w * b) == u))
-                .solve()
-                .map_or(0, |solution| {
-                    let a = solution.value(a).round();
-                    let b = solution.value(b).round();
+            s.check(Vec::<z3::ast::Bool>::new().as_slice());
+            s.get_model().map_or(0, |model| {
+                model.eval(&total_cost, true).unwrap().as_i64().unwrap()
+            })
+        };
 
-                    (3.0 * a + b) as i64
-                })
-        })
-        .sum();
+        part1 += minimise_with_prize_position(prize_x_1, prize_y_1);
+        part2 += minimise_with_prize_position(prize_x_2, prize_y_2);
+    }
 
-    (result, 0)
+    (part1, part2)
 }
 
 fn main() {
