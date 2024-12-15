@@ -261,6 +261,20 @@ fn print_grid(
     }
 }
 
+fn tally_gps(grid: &ndarray::Array2<u8>) -> i64 {
+    let mut total_gps = 0;
+    for row in 0..grid.nrows() {
+        for column in 0..grid.ncols() {
+            let c = grid[(row, column)];
+            if c == b'O' {
+                total_gps += 100 * row + column;
+            }
+        }
+    }
+
+    total_gps as i64
+}
+
 fn solve(mut lines: impl Iterator<Item = String>) -> (i64, i64) {
     let mut grid_part1 = util::lines_to_grid(lines.by_ref().take_while(|line| !line.is_empty()));
 
@@ -331,19 +345,9 @@ fn solve(mut lines: impl Iterator<Item = String>) -> (i64, i64) {
             robot_column = robot_new_column;
         }
 
-        let mut total_gps = 0;
-        for row in 0..grid_part1.nrows() {
-            for column in 0..grid_part1.ncols() {
-                let c = grid_part1[(row, column)];
-                if c == b'O' {
-                    total_gps += 100 * row + column;
-                }
-            }
-        }
-
         print_grid(&mut io::stdout(), &grid_part1, (robot_row, robot_column));
 
-        total_gps
+        tally_gps(&grid_part1)
     };
 
     // Part 2
@@ -398,18 +402,9 @@ fn solve(mut lines: impl Iterator<Item = String>) -> (i64, i64) {
             }
         }
 
-        let mut total_gps = 0;
-        for row in 0..grid_part2.nrows() {
-            for column in 0..grid_part2.ncols() {
-                let c = grid_part2[(row, column)];
-                if c == b'[' {
-                    total_gps += 100 * row + column;
-                }
-            }
-        }
-
         print_grid(&mut io::stdout(), &grid_part2, (robot_row, robot_column));
-        total_gps
+
+        tally_gps(&grid_part2)
     };
 
     (total_gps_1 as i64, total_gps_2 as i64)
