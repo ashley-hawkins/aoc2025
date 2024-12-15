@@ -3,8 +3,17 @@ use std::{
     io,
 };
 
+const EMPTY_SPACE_CHARACTER: u8 = b'.';
+
+const ROBOT_CHARACTER: u8 = b'@';
+const WALL_CHARACTER: u8 = b'#';
+
+const BOX_LEFT_CHARACTER: u8 = b'[';
+const BOX_RIGHT_CHARACTER: u8 = b']';
+
+const BOX_SINGLE_CHARACTER: u8 = b'O';
+
 use itertools::{iproduct, Itertools};
-use multimap::MultiMap;
 
 #[derive(Debug, Hash)]
 enum Direction {
@@ -64,7 +73,7 @@ fn try_clear_space(
 
         let current_character = grid[(row, column)];
 
-        if current_character == b']' {
+        if current_character == BOX_RIGHT_CHARACTER {
             return check_clear_space_recursive(
                 grid,
                 dependencies,
@@ -81,14 +90,14 @@ fn try_clear_space(
             return RequiresMove((row, column));
         }
 
-        if current_character == b'.' {
+        if current_character == EMPTY_SPACE_CHARACTER {
             return Clear;
         }
 
-        if current_character == b'[' {
+        if current_character == BOX_LEFT_CHARACTER {
             let initial_tile_1 = (row, column);
             let initial_tile_2 = Direction::Right.apply((row, column)).unwrap();
-            assert!(grid[initial_tile_2] == b']', "{}", grid);
+            assert!(grid[initial_tile_2] == BOX_RIGHT_CHARACTER, "{}", grid);
 
             let move_1 = match direction.apply(initial_tile_1) {
                 Some(new_position) => new_position,
@@ -226,11 +235,11 @@ fn clear_space(
         let next_pos_1 = direction.apply(pos_1).unwrap();
         let next_pos_2 = direction.apply(pos_2).unwrap();
 
-        grid[pos_1] = b'.';
-        grid[pos_2] = b'.';
+        grid[pos_1] = EMPTY_SPACE_CHARACTER;
+        grid[pos_2] = EMPTY_SPACE_CHARACTER;
 
-        grid[next_pos_1] = b'[';
-        grid[next_pos_2] = b']';
+        grid[next_pos_1] = BOX_LEFT_CHARACTER;
+        grid[next_pos_2] = BOX_RIGHT_CHARACTER;
 
         satisfied_dependencies.insert(pos_1);
     }
@@ -261,12 +270,12 @@ fn print_grid(
     }
 }
 
-fn tally_gps(grid: &ndarray::Array2<u8>) -> i64 {
+fn tally_gps(grid: &ndarray::Array2<u8>, box_character: u8) -> i64 {
     let mut total_gps = 0;
     for row in 0..grid.nrows() {
         for column in 0..grid.ncols() {
             let c = grid[(row, column)];
-            if c == b'O' {
+            if c == box_character {
                 total_gps += 100 * row + column;
             }
         }
@@ -280,11 +289,11 @@ fn solve(mut lines: impl Iterator<Item = String>) -> (i64, i64) {
 
     let grid_part2 = grid_part1
         .iter()
-        .flat_map(|c| *match c {
-            b'@' => b"@.",
-            b'#' => b"##",
-            b'O' => b"[]",
-            b'.' => b"..",
+        .flat_map(|c| match *c {
+            ROBOT_CHARACTER => [ROBOT_CHARACTER, EMPTY_SPACE_CHARACTER],
+            WALL_CHARACTER => [WALL_CHARACTER, WALL_CHARACTER],
+            BOX_SINGLE_CHARACTER => [BOX_LEFT_CHARACTER, BOX_RIGHT_CHARACTER],
+            EMPTY_SPACE_CHARACTER => [EMPTY_SPACE_CHARACTER, EMPTY_SPACE_CHARACTER],
             _ => panic!(),
         })
         .collect::<Vec<_>>();
@@ -301,10 +310,10 @@ fn solve(mut lines: impl Iterator<Item = String>) -> (i64, i64) {
     let total_gps_1 = {
         let (mut robot_row, mut robot_column) =
             iproduct!(0..grid_part1.nrows(), 0..grid_part1.ncols())
-                .find(|(row, column)| grid_part1[(*row, *column)] == b'@')
+                .find(|(row, column)| grid_part1[(*row, *column)] == ROBOT_CHARACTER)
                 .unwrap();
 
-        grid_part1[(robot_row, robot_column)] = b'.';
+        grid_part1[(robot_row, robot_column)] = EMPTY_SPACE_CHARACTER;
 
         'outer: for move_ in &moves {
             let (robot_new_row, robot_new_column) = match move_.apply((robot_row, robot_column)) {
@@ -328,17 +337,17 @@ fn solve(mut lines: impl Iterator<Item = String>) -> (i64, i64) {
                 }
 
                 current_character = grid_part1[(new_row, new_column)];
-                if current_character != b'O' {
+                if current_character != BOX_SINGLE_CHARACTER {
                     break;
                 }
             }
 
-            if current_character == b'#' {
+            if current_character == WALL_CHARACTER {
                 continue;
             }
 
             let original = grid_part1[(robot_new_row, robot_new_column)];
-            grid_part1[(robot_new_row, robot_new_column)] = b'.';
+            grid_part1[(robot_new_row, robot_new_column)] = EMPTY_SPACE_CHARACTER;
             grid_part1[(new_row, new_column)] = original;
 
             robot_row = robot_new_row;
@@ -347,17 +356,17 @@ fn solve(mut lines: impl Iterator<Item = String>) -> (i64, i64) {
 
         print_grid(&mut io::stdout(), &grid_part1, (robot_row, robot_column));
 
-        tally_gps(&grid_part1)
+        tally_gps(&grid_part1, BOX_SINGLE_CHARACTER)
     };
 
     // Part 2
     let total_gps_2 = {
         let (mut robot_row, mut robot_column) =
             iproduct!(0..grid_part2.nrows(), 0..grid_part2.ncols())
-                .find(|(row, column)| grid_part2[(*row, *column)] == b'@')
+                .find(|(row, column)| grid_part2[(*row, *column)] == ROBOT_CHARACTER)
                 .unwrap();
 
-        grid_part2[(robot_row, robot_column)] = b'.';
+        grid_part2[(robot_row, robot_column)] = EMPTY_SPACE_CHARACTER;
 
         for (i, move_) in moves.iter().enumerate() {
             let (robot_new_row, robot_new_column) = match move_.apply((robot_row, robot_column)) {
@@ -378,10 +387,12 @@ fn solve(mut lines: impl Iterator<Item = String>) -> (i64, i64) {
             for row in 0..grid_part2.nrows() {
                 for column in 0..grid_part2.ncols() {
                     let c = grid_part2[(row, column)];
-                    if (c == b'['
-                        && grid_part2[Direction::Right.apply((row, column)).unwrap()] != b']')
-                        || (c == b']'
-                            && grid_part2[Direction::Left.apply((row, column)).unwrap()] != b'[')
+                    if (c == BOX_LEFT_CHARACTER
+                        && grid_part2[Direction::Right.apply((row, column)).unwrap()]
+                            != BOX_RIGHT_CHARACTER)
+                        || (c == BOX_RIGHT_CHARACTER
+                            && grid_part2[Direction::Left.apply((row, column)).unwrap()]
+                                != BOX_LEFT_CHARACTER)
                     {
                         let mut grid_string_writer = io::Cursor::new(Vec::new());
 
@@ -404,7 +415,7 @@ fn solve(mut lines: impl Iterator<Item = String>) -> (i64, i64) {
 
         print_grid(&mut io::stdout(), &grid_part2, (robot_row, robot_column));
 
-        tally_gps(&grid_part2)
+        tally_gps(&grid_part2, BOX_LEFT_CHARACTER)
     };
 
     (total_gps_1 as i64, total_gps_2 as i64)
