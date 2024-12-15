@@ -1,14 +1,48 @@
 use itertools::Itertools;
 use util::stdin_lines;
-use z3::ast::{Ast, Int};
+
+fn solve_with_cramers_rule(
+    button_a_dx: i64,
+    button_a_dy: i64,
+    button_b_dx: i64,
+    button_b_dy: i64,
+    prize_x: i64,
+    prize_y: i64,
+) -> Option<(i64, i64)> {
+    // Matrices:
+    // | a_dx b_dx | | a | = | prize_x |
+    // | a_dy b_dy | | b | = | prize_y |
+
+    // Determinant of the coefficients matrix:
+    // | a_dx b_dx |
+    // | a_dy b_dy |
+    let det_coefficients = (button_a_dx * button_b_dy) - (button_a_dy * button_b_dx);
+
+    // This means there isn't one unique solution.
+    // This edge case does not need to be handled, so return None.
+    if det_coefficients == 0 {
+        return None;
+    }
+
+    // Determinant of the a matrix:
+    // | prize_x b_dx |
+    // | prize_y b_dy |
+    let det_a = (prize_x * button_b_dy) - (prize_y * button_b_dx);
+
+    // Determinant of the b matrix:
+    // | a_dx prize_x |
+    // | a_dy prize_y |
+    let det_b = (button_a_dx * prize_y) - (button_a_dy * prize_x);
+
+    let solution_a = det_a as f64 / det_coefficients as f64;
+    let solution_b = det_b as f64 / det_coefficients as f64;
+
+    // Only integer solutions are desired.
+    (solution_a == solution_a.floor() && solution_b == solution_b.floor())
+        .then_some((solution_a as i64, solution_b as i64))
+}
 
 fn solve(lines: impl Iterator<Item = String>) -> (i64, i64) {
-    let cfg = z3::Config::new();
-    let ctx = z3::Context::new(&cfg);
-
-    let a = Int::new_const(&ctx, "a".to_string());
-    let b = Int::new_const(&ctx, "b".to_string());
-
     let mut part1: i64 = 0;
     let mut part2: i64 = 0;
     for entry in lines.chunks(4).into_iter() {
@@ -26,16 +60,9 @@ fn solve(lines: impl Iterator<Item = String>) -> (i64, i64) {
         let prize_y_2 = prize_y_1 + 10000000000000;
 
         let minimise_with_prize_position = |prize_x, prize_y| {
-            let s = z3::Optimize::new(&ctx);
-            let total_cost = 3i64 * &a + &b;
-            s.assert(&(a_dx * &a + b_dx * &b)._eq(&Int::from_i64(&ctx, prize_x)));
-            s.assert(&(a_dy * &a + b_dy * &b)._eq(&Int::from_i64(&ctx, prize_y)));
-            s.minimize(&total_cost);
-
-            s.check(Vec::<z3::ast::Bool>::new().as_slice());
-            s.get_model().map_or(0, |model| {
-                model.eval(&total_cost, true).unwrap().as_i64().unwrap()
-            })
+            solve_with_cramers_rule(a_dx, a_dy, b_dx, b_dy, prize_x, prize_y)
+                .map(|(a, b)| 3 * a + b)
+                .unwrap_or(0)
         };
 
         part1 += minimise_with_prize_position(prize_x_1, prize_y_1);
