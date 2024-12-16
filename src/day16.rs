@@ -1,6 +1,7 @@
 use std::collections::{BinaryHeap, HashMap, HashSet};
 
 use itertools::iproduct;
+use multimap::MultiMap;
 
 #[repr(u8)]
 #[derive(Debug, Hash, Clone, Copy, Eq, PartialEq, PartialOrd, Ord)]
@@ -108,6 +109,9 @@ impl Metadata {
 const FORWARD_COST: i64 = 1;
 const TURN_COST: i64 = 1000;
 
+// Part 2 idea:
+// Store "previous" as a MultiMap<Node, Node> and as a post process step, check every node in the multimap against its cost and eliminate the non-optimal ones. That way we can get every possible path and its cost.
+
 fn solve(lines: impl Iterator<Item = String>) -> (i64, i64) {
     let maze: ndarray::Array2<u8> = util::lines_to_grid(lines);
 
@@ -121,6 +125,8 @@ fn solve(lines: impl Iterator<Item = String>) -> (i64, i64) {
     let mut metadata = HashMap::<Node, Metadata>::new();
     let mut heap = BinaryHeap::new();
 
+    let mut prevs = MultiMap::<Node, Node>::new();
+
     heap.push(State {
         cost: 0,
         node: Node {
@@ -129,55 +135,152 @@ fn solve(lines: impl Iterator<Item = String>) -> (i64, i64) {
         },
     });
 
-    let shortest = loop {
-        if let Some(state) = heap.pop() {
-            let meta = metadata.entry(state.node).or_insert_with(Metadata::new);
+    let mut shortest_vec = Vec::new();
+    while let Some(state) = heap.pop() {
+        let meta = metadata.entry(state.node).or_insert_with(Metadata::new);
 
-            if meta.visited {
-                continue;
-            }
-            meta.visited = true;
+        if meta.visited {
+            continue;
+        }
+        meta.visited = true;
 
-            if state.node.position == (end_row, end_col) {
-                break Some(state.cost);
-            }
+        if state.node.position == (end_row, end_col) {
+            shortest_vec.push((state.cost, state.node));
+        }
 
-            for new_direction in &[
-                Direction::North,
-                Direction::East,
-                Direction::South,
-                Direction::West,
-            ] {
-                let new_position = new_direction.apply(state.node.position).unwrap();
-                let new_node = Node {
-                    position: new_position,
-                    direction: *new_direction,
-                };
+        for new_direction in &[
+            Direction::North,
+            Direction::East,
+            Direction::South,
+            Direction::West,
+        ] {
+            let new_position = new_direction.apply(state.node.position).unwrap();
+            let new_node = Node {
+                position: new_position,
+                direction: *new_direction,
+            };
 
-                let turn_penalty = TURN_COST * state.node.direction.min_turns_to(new_direction);
-                let new_cost = state.cost + turn_penalty + FORWARD_COST;
+            let turn_penalty = TURN_COST * state.node.direction.min_turns_to(new_direction);
+            let new_cost = state.cost + turn_penalty + FORWARD_COST;
 
-                let new_meta = metadata.entry(new_node).or_insert_with(Metadata::new);
+            let new_meta = metadata.entry(new_node).or_insert_with(Metadata::new);
 
-                if new_meta.cost > new_cost {
-                    if maze[new_node.position] == b'#' {
-                        continue;
-                    }
-
-                    new_meta.cost = new_cost;
-                    heap.push(State {
-                        cost: new_cost,
-                        node: new_node,
-                    });
+            if new_meta.cost >= new_cost {
+                if maze[new_node.position] == b'#' {
+                    continue;
                 }
+
+                heap.push(State {
+                    cost: new_cost,
+                    node: new_node,
+                });
+
+                if new_meta.cost != new_cost {
+                    if let Some(v) = prevs.get_vec_mut(&new_node) {
+                        v.clear()
+                    }
+                }
+
+                new_meta.cost = new_cost;
+                prevs.insert(new_node, state.node);
             }
-        } else {
-            break None;
         }
     }
-    .unwrap();
 
-    (shortest, 0)
+    let shortest = shortest_vec.iter().map(|(cost, _)| *cost).min().unwrap();
+    shortest_vec.retain(|(cost, _)| *cost == shortest);
+
+    let shortest_set: HashSet<Node> = shortest_vec.iter().map(|(_, node)| *node).collect();
+
+    // println!(
+    //     "{:?} and {:?} / {:?} / {:?} / {:?}",
+    //     prevs
+    //         .get_vec(&Node {
+    //             position: (1, 6),
+    //             direction: Direction::East,
+    //         })
+    //         .unwrap(),
+    //     metadata[&Node {
+    //         position: (1, 5),
+    //         direction: Direction::East
+    //     }],
+    //     metadata[&Node {
+    //         position: (1, 5),
+    //         direction: Direction::North
+    //     }],
+    //     metadata[&Node {
+    //         position: (6, 1),
+    //         direction: Direction::North
+    //     }],
+    //     metadata[&Node {
+    //         position: (2, 5),
+    //         direction: Direction::North
+    //     }],
+    // );
+
+    let mut all_shortest_positions = HashSet::new();
+    fn recursively_traverse_prevs(
+        prevs: &MultiMap<Node, Node>,
+        node: Node,
+        all_shortest_positions: &mut HashSet<(usize, usize)>,
+        visited: &mut HashSet<Node>,
+    ) {
+        if visited.contains(&node) {
+            return;
+        }
+        visited.insert(node);
+
+        all_shortest_positions.insert(node.position);
+        if prevs.contains_key(&node) {
+            let vec = prevs.get_vec(&node).unwrap();
+            if vec.is_empty() {
+                return;
+            }
+
+            for prev in vec {
+                recursively_traverse_prevs(prevs, *prev, all_shortest_positions, visited);
+            }
+        }
+    }
+
+    // println!(
+    //     "{:?}",
+    //     prevs
+    //         .get_vec(&Node {
+    //             position: (1, 6),
+    //             direction: Direction::East,
+    //         })
+    //         .unwrap()
+    // );
+
+    println!("Shortest path: {}", shortest);
+
+    for node in shortest_set {
+        recursively_traverse_prevs(
+            &prevs,
+            node,
+            &mut all_shortest_positions,
+            &mut HashSet::new(),
+        );
+    }
+
+    for row in 0..maze.nrows() {
+        for col in 0..maze.ncols() {
+            let c = if all_shortest_positions.contains(&(row, col)) {
+                'O'
+            } else if (row, col) == (start_row, start_col) {
+                'S'
+            } else if (row, col) == (end_row, end_col) {
+                'E'
+            } else {
+                maze[(row, col)] as char
+            };
+            print!("{}", c);
+        }
+        println!();
+    }
+
+    (shortest, all_shortest_positions.len() as i64)
 }
 
 fn main() {
