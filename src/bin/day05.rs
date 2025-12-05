@@ -1,7 +1,7 @@
 use util::stdin_lines;
 
-fn solve(mut lines: impl Iterator<Item = String>) -> (usize, u64) {
-    let ranges = lines
+fn solve(mut lines: impl Iterator<Item = String>) -> (usize, usize) {
+    let mut ranges = lines
         .by_ref()
         .take_while(|x| !x.is_empty())
         .map(|line| {
@@ -16,14 +16,30 @@ fn solve(mut lines: impl Iterator<Item = String>) -> (usize, u64) {
         })
         .collect::<Vec<_>>();
 
+    ranges.sort_by_key(|r| r.start);
+
+    let mut non_overlapping_ranges = vec![ranges[0].clone()];
+
+    for rng in &ranges[1..] {
+        let last_rng = non_overlapping_ranges.last_mut().unwrap();
+        if rng.start <= last_rng.end {
+            last_rng.end = last_rng.end.max(rng.end);
+        } else {
+            non_overlapping_ranges.push(rng.clone());
+        }
+    }
+
     let count = lines
         .filter(|line| {
-            ranges
+            non_overlapping_ranges
                 .iter()
                 .any(|range| range.contains(&line.parse::<u64>().unwrap()))
         })
         .count();
-    (count, 0)
+
+    let count2: usize = non_overlapping_ranges.into_iter().map(|rng| rng.count()).sum();
+
+    (count, count2)
 }
 
 fn main() {
