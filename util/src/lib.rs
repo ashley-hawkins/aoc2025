@@ -7,6 +7,13 @@ pub fn stdin_lines() -> impl Iterator<Item = String> {
     stream_lines(io::stdin().lock())
 }
 
+pub fn stdin_split(delim: u8) -> impl Iterator<Item = String> {
+    io::stdin()
+        .lock()
+        .split(delim)
+        .map(|elem| String::from_utf8(elem.unwrap()).unwrap())
+}
+
 pub fn file_lines(p: impl AsRef<Path>) -> impl Iterator<Item = String> {
     stream_lines(BufReader::new(std::fs::File::open(p).unwrap()))
 }
