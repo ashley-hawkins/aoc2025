@@ -1,7 +1,35 @@
 use util::stdin_split;
 
+fn check_invalid(num: u64, part_2: bool) -> bool {
+    let digits = num.ilog10() as usize + 1;
+
+    let range = if part_2 { 2..=digits } else { 2..=2 };
+
+    'outer: for i in range {
+        if !digits.is_multiple_of(i) {
+            continue;
+        }
+
+        let increment = digits / i;
+
+        let denom = 10u64.pow(increment as u32);
+        let reference = num % denom;
+
+        for j in 1..i {
+            let next = num / 10u64.pow((increment * j) as u32);
+
+            if reference != next % denom {
+                continue 'outer;
+            }
+        }
+        return true;
+    }
+
+    false
+}
+
 fn solve(lines: impl Iterator<Item = String>) -> (u64, u64) {
-    let mut count: u64 = lines
+    let ids: Vec<_> = lines
         .flat_map(|line| {
             let (begin, end) = <[u64; 2]>::try_from(
                 line.split('-')
@@ -13,23 +41,12 @@ fn solve(lines: impl Iterator<Item = String>) -> (u64, u64) {
 
             begin..end + 1
         })
-        .filter(|num| {
-            let digits = num.ilog10() as usize + 1;
+        .collect();
 
-            if !digits.is_multiple_of(2) {
-                return false;
-            }
+    let count = ids.iter().filter(|&&num| check_invalid(num, false)).sum();
+    let count2 = ids.iter().filter(|&&num| check_invalid(num, true)).sum();
 
-            let half = digits / 2;
-            let denom = 10u64.pow(half as u32);
-
-            let invalid = num % denom == num / denom;
-
-            invalid
-        })
-        .sum();
-
-    (count, 0)
+    (count, count2)
 }
 
 fn main() {
