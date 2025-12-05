@@ -15,7 +15,7 @@ fn max_joltage_with_digits(joltages: &[u8], digits: usize) -> u64 {
             .iter()
             .enumerate()
             .rev()
-            .max_by_key(|(_, &j)| j)
+            .max_by_key(|&(_, &j)| j)
             .unwrap()
             .0
             + start_idx;
